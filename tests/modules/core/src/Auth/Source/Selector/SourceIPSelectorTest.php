@@ -2,22 +2,20 @@
 
 declare(strict_types=1);
 
-namespace SimpleSAML\Test\Module\core\Auth\Source;
+namespace SimpleSAML\Test\Module\core\Auth\Source\Selector;
 
-use Error;
-use Exception;
 use PHPUnit\Framework\TestCase;
 use SimpleSAML\Assert\AssertionFailedException;
 use SimpleSAML\Auth;
 use SimpleSAML\Configuration;
-use SimpleSAML\HTTP\RunnableResponse;
-use SimpleSAML\Module\core\Auth\Source\IPSourceSelector;
+use SimpleSAML\Error\Exception;
+use SimpleSAML\Module\core\Auth\Source\Selector\SourceIPSelector;
 
 /**
  * @covers \SimpleSAML\Module\core\Auth\Source\AbstractSourceSelector
- * @covers \SimpleSAML\Module\core\Auth\Source\IPSourceSelector
+ * @covers \SimpleSAML\Module\core\Auth\Source\Selector\SourceIPSelector
  */
-class IPSourceSelectorTest extends TestCase
+class SourceIPSelectorTest extends TestCase
 {
     /** @var \SimpleSAML\Configuration */
     private Configuration $config;
@@ -39,7 +37,7 @@ class IPSourceSelectorTest extends TestCase
 
         $this->sourceConfig = Configuration::loadFromArray([
             'selector' => [
-                'core:IPSourceSelector',
+                'core:SourceIPSelector',
 
                 'zones' => [
                     'internal' => [
@@ -87,7 +85,7 @@ class IPSourceSelectorTest extends TestCase
 
         $sourceConfig = Configuration::loadFromArray([
             'selector' => [
-                'core:IPSourceSelector',
+                'core:SourceIPSelector',
 
                 'zones' => [
                     'internal' => [],
@@ -96,7 +94,7 @@ class IPSourceSelectorTest extends TestCase
         ]);
         Configuration::setPreLoadedConfig($sourceConfig, 'authsources.php');
 
-        new IPSourceSelector(['AuthId' => 'selector'], $sourceConfig->getArray('selector'));
+        new SourceIPSelector(['AuthId' => 'selector'], $sourceConfig->getArray('selector'));
     }
 
 
@@ -110,7 +108,7 @@ class IPSourceSelectorTest extends TestCase
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
         $_SERVER['REQUEST_URI'] = '/';
 
-        $selector = new class ($info, $config) extends IPSourceSelector {
+        $selector = new class ($info, $config) extends SourceIPSelector {
             /**
              * @param \SimpleSAML\Auth\Source $as
              * @param array $state
@@ -120,11 +118,20 @@ class IPSourceSelectorTest extends TestCase
             {
                 // Dummy
             }
+
+            /**
+             * @param array &$state
+             * @return void
+             */
+            public function authenticate(array &$state): void
+            {
+                $state['finished'] = true;
+            }
         };
 
         $state = [];
-        $result = $selector->authenticate($state);
-        $this->assertNull($result);
+        $selector->authenticate($state);
+        $this->assertTrue($state['finished']);
     }
 
 
@@ -140,23 +147,84 @@ class IPSourceSelectorTest extends TestCase
 
         $_SERVER['REMOTE_ADDR'] = $ip;
 
-        $selector = new class ($info, $config) extends IPSourceSelector {
-            /**
-             * @return string
-             */
-            public function selectAuthSource(): string
+        $selector = new class ($info, $config) extends SourceIPSelector {
+            public function selectAuthSource(array &$state): string
             {
-                return parent::selectAuthSource();
+                return parent::selectAuthSource($state);
             }
         };
 
-        $source = $selector->selectAuthSource();
+        $state = [];
+        $source = $selector->selectAuthSource($state);
         $this->assertEquals($expected, $source);
     }
 
 
     /**
-     * @return string
+     */
+    public function testIncompleteConfigurationThrowsExceptionVariant1(): void
+    {
+        $sourceConfig = Configuration::loadFromArray([
+            'selector' => [
+                'core:SourceIPSelector',
+
+                'zones' => [
+                    'internal' => [
+                        'subnet' => [
+                            '10.0.0.0/8',
+                            '2001:0DB8::/108',
+                        ],
+                    ],
+
+                    'default' => 'external',
+                ],
+            ],
+        ]);
+
+        Configuration::setPreLoadedConfig($this->sourceConfig, 'authsources.php');
+
+        $info = ['AuthId' => 'selector'];
+        $config = $sourceConfig->getArray('selector');
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage("Incomplete zone-configuration 'internal' due to missing `source` key.");
+
+        new SourceIPSelector($info, $config);
+    }
+
+
+    /**
+     */
+    public function testIncompleteConfigurationThrowsExceptionVariant2(): void
+    {
+        $sourceConfig = Configuration::loadFromArray([
+            'selector' => [
+                'core:SourceIPSelector',
+
+                'zones' => [
+                    'internal' => [
+                        'source' => 'internal',
+                    ],
+
+                    'default' => 'external',
+                ],
+            ],
+        ]);
+
+        Configuration::setPreLoadedConfig($this->sourceConfig, 'authsources.php');
+
+        $info = ['AuthId' => 'selector'];
+        $config = $sourceConfig->getArray('selector');
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage("Incomplete zone-configuration 'internal' due to missing `subnet` key.");
+
+        new SourceIPSelector($info, $config);
+    }
+
+
+    /**
+     * @return array
      */
     public function provideClientIP(): array
     {

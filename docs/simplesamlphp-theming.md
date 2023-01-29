@@ -64,13 +64,13 @@ In the `modules/mymodule/themes/fancytheme/default/_header.twig` file, type in s
 
 ## Adding resource files
 
-You can put resource files within the `www/assets` folder of your module, to make your module completely independent with included css, icons etc.
+You can put resource files within the `public/assets` folder of your module, to make your module completely independent with included css, icons etc.
 
 modules
 └───mymodule
     └───lib
     └───themes
-    └───www
+    └───public
         └───assets
             └───logo.svg
             └───style.css
@@ -101,7 +101,7 @@ See the [Twig documentation](https://twig.symfony.com/doc/2.x/templates.html) fo
 ## Migrating to Twig templates
 
 For existing themes that have been created before SimpleSAMLphp 2.0, you may need to upgrade them to the Twig
-templating enging to be compatible with SimpleSAMLphp 2.0.
+templating engine to be compatible with SimpleSAMLphp 2.0.
 
 Twig works by extending a base template, which can itself include other partial templates. Some of the content of the old `includes/header.php` template is now located in a separate `_header.twig` file. This can be customized by copying it from the base template:
 
@@ -116,7 +116,7 @@ cp templates/base.twig modules/mymodule/themes/fancytheme/default/
 ```
 
 Any references to `$this->data['baseurlpath']` in old-style templates can be replaced with `{{baseurlpath}}` in Twig templates. Likewise, references to `\SimpleSAML\Module::getModuleURL()` can be replaced with `{{baseurlpath}}module.php/mymodule/...` or the `asset()` function like shown above.
-If you want to use the `asset()` function, you need to move the asserts from `www/` to `www/assets/`.
+If you want to use the `asset()` function, you need to move the asserts from `public/` to `public/assets/`.
 
 Within templates each module is defined as a separate namespace matching the module name. This allows one template to reference templates from other modules using Twig's `@namespace_name/template_path` notation. For instance, a template in `mymodule` can include the widget template from the `yourmodule` module using the notation `@yourmodule/widget.twig`. A special namespace, `__parent__`, exists to allow theme developers to more easily extend a module's stock template.
 

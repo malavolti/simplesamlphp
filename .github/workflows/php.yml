@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         operating-system: [ubuntu-latest, windows-latest]
-        php-versions: ['8.0', '8.1']
+        php-versions: ['8.0', '8.1', '8.2']
 
     steps:
       - name: Setup PHP, with composer and extensions
@@ -28,7 +28,7 @@ jobs:
           extensions: intl, mbstring, mysql, pdo, pdo_sqlite, xml
           tools: composer:v2
           ini-values: error_reporting=E_ALL
-          coverage: pcov
+          coverage: xdebug
 
       - name: Setup problem matchers for PHP
         run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
@@ -43,14 +43,18 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Get composer cache directory (linux)
+        if: ${{ matrix.operating-system == 'ubuntu-latest' }}
+        run: echo "COMPOSER_CACHE=$(composer config cache-files-dir)" >> $GITHUB_ENV
+
+      - name: Get composer cache directory (windows)
+        if: ${{ matrix.operating-system == 'windows-latest' }}
+        run: echo "COMPOSER_CACHE=$(composer config cache-files-dir)" >> $env:GITHUB_ENV
 
       - name: Cache composer dependencies
         uses: actions/cache@v3
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
+          path: $COMPOSER_CACHE
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
@@ -63,18 +67,16 @@ jobs:
       - name: Syntax check PHP
         run: bash vendor/bin/check-syntax-php.sh
 
-      - name: Decide whether to run code coverage or not
-        if: ${{ matrix.php-versions != '8.0' || matrix.operating-system != 'ubuntu-latest' }}
-        run: |
-          echo "NO_COVERAGE=--no-coverage" >> $GITHUB_ENV
+      - name: Run unit tests with coverage
+        if: ${{ matrix.php-versions == '8.1' && matrix.operating-system == 'ubuntu-latest' }}
+        run: ./vendor/bin/phpunit
 
-      - name: Run unit tests
-        run: |
-          echo $NO_COVERAGE
-          ./vendor/bin/phpunit $NO_COVERAGE
+      - name: Run unit tests (no coverage)
+        if: ${{ matrix.php-versions != '8.1' || matrix.operating-system != 'ubuntu-latest' }}
+        run: ./vendor/bin/phpunit --no-coverage
 
       - name: Save coverage data
-        if: ${{ matrix.php-versions == '8.0' && matrix.operating-system == 'ubuntu-latest' }}
+        if: ${{ matrix.php-versions == '8.1' && matrix.operating-system == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v3
         with:
             name: build-data
@@ -97,14 +99,10 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
       - name: Cache composer dependencies
         uses: actions/cache@v3
         with:
-            path: ${{ steps.composer-cache.outputs.dir }}
+            path: $COMPOSER_CACHE
             key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
             restore-keys: ${{ runner.os }}-composer-
 
@@ -112,13 +110,13 @@ jobs:
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Security check for locked dependencies
-        uses: symfonycorp/security-checker-action@v3
+        run: composer audit
 
       - name: Update Composer dependencies
         run: composer update --no-progress --prefer-dist --optimize-autoloader
 
       - name: Security check for updated dependencies
-        uses: symfonycorp/security-checker-action@v3
+        run: composer audit
 
   sanity-check:
     name: Sanity checks
@@ -138,14 +136,10 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
       - name: Cache composer dependencies
         uses: actions/cache@v3
         with:
-            path: ${{ steps.composer-cache.outputs.dir }}
+            path: $COMPOSER_CACHE
             key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
             restore-keys: ${{ runner.os }}-composer-
 
@@ -177,14 +171,10 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
       - name: Cache composer dependencies
         uses: actions/cache@v3
         with:
-            path: ${{ steps.composer-cache.outputs.dir }}
+            path: $COMPOSER_CACHE
             key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
             restore-keys: ${{ runner.os }}-composer-
 

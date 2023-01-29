@@ -24,6 +24,8 @@ $config = [
      *
      * The full url format is useful if your SimpleSAMLphp setup is hosted behind
      * a reverse proxy. In that case you can specify the external url here.
+     * Specifying the full URL including https: will let SimpleSAMLphp know
+     * that it runs on HTTPS even if the backend server is plain HTTP.
      *
      * Please note that SimpleSAMLphp will then redirect all queries to the
      * external url, no matter where you come from (direct access or via the
@@ -35,7 +37,7 @@ $config = [
      * The 'application' configuration array groups a set configuration options
      * relative to an application protected by SimpleSAMLphp.
      */
-    //'application' => [
+    'application' => [
         /*
          * The 'baseURL' configuration option allows you to specify a protocol,
          * host and optionally a port that serves as the canonical base for all
@@ -51,7 +53,7 @@ $config = [
          * to SimpleSAMLphp's API.
          */
         //'baseURL' => 'https://example.com',
-    //],
+    ],
 
     /*
      * The following settings are *filesystem paths* which define where
@@ -64,8 +66,8 @@ $config = [
      * When specified as a relative path, this is relative to the SimpleSAMLphp
      * root directory.
      */
-    'loggingdir' => 'log/',
-    'datadir' => 'data/',
+    //'loggingdir' => '/var/log/',
+    //'datadir' => '/var/data/',
     'tempdir' => '/tmp/simplesaml',
 
     /*
@@ -84,7 +86,7 @@ $config = [
      * 'certdir' parameter below. When 'certdir' is specified as a relative
      * path, it will be interpreted as relative to the SimpleSAMLphp root
      * directory. Note that locations with no prefix included will be treated
-     * as file locations for backwards compatibility.
+     * as file locations.
      */
     'certdir' => 'cert/',
 
@@ -112,7 +114,6 @@ $config = [
      * Defaults are shown below, to change them, uncomment the line and update as
      * needed
      */
-
     //'cert.pdo.table' => 'certificates',
     //'cert.pdo.keytable' => 'private_keys',
     //'cert.pdo.apply_prefix' => true,
@@ -139,19 +140,22 @@ $config = [
      * Set the transport options for the transport method specified.  The valid settings are relative to the
      * selected transport method.
      */
-    // // smtp mail transport options
-    // 'mail.transport.options' => [
-    //     'host' => 'mail.example.org', // required
-    //     'port' => 25, // optional
-    //     'username' => 'user@example.org', // optional: if set, enables smtp authentication
-    //     'password' => 'password', // optional: if set, enables smtp authentication
-    //     'security' => 'tls', // optional: defaults to no smtp security
-    //     'smtpOptions' => [], // optional: passed to stream_context_create when connecting via SMTP
-    // ],
-    // // sendmail mail transport options
-    // 'mail.transport.options' => [
-    //     'path' => '/usr/sbin/sendmail' // optional: defaults to php.ini path
-    // ],
+    /*
+    'mail.transport.options' => [
+        'host' => 'mail.example.org', // required
+        'port' => 25, // optional
+        'username' => 'user@example.org', // optional: if set, enables smtp authentication
+        'password' => 'password', // optional: if set, enables smtp authentication
+        'security' => 'tls', // optional: defaults to no smtp security
+        'smtpOptions' => [], // optional: passed to stream_context_create when connecting via SMTP
+    ],
+
+    // sendmail mail transport options
+    /*
+    'mail.transport.options' => [
+        'path' => '/usr/sbin/sendmail' // optional: defaults to php.ini path
+    ],
+    */
 
     /*
      * The envelope from address for outgoing emails.
@@ -317,7 +321,7 @@ $config = [
 
     /*
      * Custom error show function called from SimpleSAML\Error\Error::show.
-     * See docs/simplesamlphp-errorhandling.txt for function code example.
+     * See docs/simplesamlphp-errorhandling.md for function code example.
      *
      * Example:
      *   'errors.show_function' => ['SimpleSAML\Module\example\Error', 'show'],
@@ -340,6 +344,9 @@ $config = [
      *
      * Options: [syslog,file,errorlog,stderr]
      *
+     * If you set the handler to 'file', the directory specified in loggingdir above
+     * must exist and be writable for SimpleSAMLphp. If set to something else, set
+     * loggingdir above to 'null'.
      */
     'logging.level' => SimpleSAML\Logger::NOTICE,
     'logging.handler' => 'syslog',
@@ -359,7 +366,7 @@ $config = [
      *
      * - %level: the log level (name or number depending on the handler used).
      *
--     * - %stat: if the log entry is intended for statistical purposes, it will print the string 'STAT ' (bear in mind
+     * - %stat: if the log entry is intended for statistical purposes, it will print the string 'STAT ' (bear in mind
      *   the trailing space).
      *
      * - %trackid: the track ID, an identifier that allows you to track a single session.
@@ -400,7 +407,8 @@ $config = [
      * This is an array of outputs. Each output has at least a 'class' option, which
      * selects the output.
      */
-    'statistics.out' => [// Log statistics to the normal log.
+    'statistics.out' => [
+        // Log statistics to the normal log.
         /*
         [
             'class' => 'core:Log',
@@ -655,7 +663,7 @@ $config = [
 
     /*
      * Custom function for session checking called on session init and loading.
-     * See docs/simplesamlphp-advancedfeatures.txt for function code example.
+     * See docs/simplesamlphp-advancedfeatures.md for function code example.
      *
      * Example:
      *   'session.check_function' => ['\SimpleSAML\Module\example\Util', 'checkSession'],

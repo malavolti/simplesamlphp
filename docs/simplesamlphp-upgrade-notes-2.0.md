@@ -51,7 +51,7 @@ composer require simplesamlphp/simplesamlphp-module-ldap --update-no-dev
 ## Configuration changes
 
 Quite some options have been changed or removed. We recommend to start with a fresh
-template from `config-templates/` and migrate the settings you require to the new
+template from `config/config.php.dist` and migrate the settings you require to the new
 config file manually.
 
 The date formatting when specifying a custom logging string has been changed from PHP's
@@ -60,9 +60,15 @@ deprecated `strftime()` format to PHP's `date()` format.
 Configuration options that have been removed:
 
 - simplesaml.nameidattribute. Use the appropriate authproc-filters instead
-- languages[priorities]
+- languages[priorities]. No replacement.
 - attributes.extradictionaries. Add an attributes.po to your configured theme instead.
 - admin.protectindexpage. Replaced by the admin module which always requires login.
+- base64attributes. Obsolete functionality, individual attributes can still be en/decoded
+  with the existing attributeencodings feature.
+- database.slaves. This is now called database.secondaries.
+- metadata.handler. Since a long time the preferred option is metadata.sources.
+- Our assets have been moved from the `www` to the `public` directory. You may have to update
+  your webserver to reflect this change.
 
 ## Changes relevant for (module) developers
 
@@ -72,6 +78,7 @@ processing filters or interface with the SimpleSAMLphp development API.
 - We expect your source-files to exist in the src/ directory within your module. This used to be the
   lib/ directory, so you have to rename the directory and for composer-modules you have to update
   your composer.json file (specifically the psr-0 and psr-4 entries if you have them).
+- We exoect your module assets to exist in the public/ directory within your module (was: www).
 - Old JSON-formatted dictionaries have been replaced by gettext / .po-files; see [migration guide][1]
 - Old PHP templates have been replaced by Twig-templates; see [migration guide][2]
 - The source was completely typehinted; if you have custom authsources or authproc filters,
