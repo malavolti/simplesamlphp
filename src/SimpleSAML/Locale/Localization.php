@@ -204,13 +204,13 @@ class Localization implements LoggerAwareInterface
             // Report that the localization for the preferred language is missing
             $error = "Localization not found for langcode '$langcode' at '$langPath', falling back to langcode '" .
                 $defLangcode . "'";
-            $this->logger->error($_SERVER['PHP_SELF'] . ' - ' . $error);
+            $this->info->error($_SERVER['PHP_SELF'] . ' - ' . $error);
             return $langPath;
         }
 
         // Locale for default language missing even, error out
         $error = "Localization directory '$langPath' missing/broken for langcode '$langcode' and domain '$domain'";
-        $this->logger->critical($_SERVER['PHP_SELF'] . ' - ' . $error);
+        $this->logger->info($_SERVER['PHP_SELF'] . ' - ' . $error);
         throw new Exception($error);
     }
 
