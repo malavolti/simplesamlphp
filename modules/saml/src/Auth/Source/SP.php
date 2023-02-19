@@ -1157,6 +1157,7 @@ class SP extends \SimpleSAML\Auth\Source
             self::handleUnsolicitedAuth($sourceId, $state, $redirectTo);
         }
 
-        Auth\Source::completeAuth($state);
+        $response = parent::completeAuth($state);
+        $response->send();
     }
 }
