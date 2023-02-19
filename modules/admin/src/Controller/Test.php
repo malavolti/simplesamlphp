@@ -137,7 +137,7 @@ class Test
                     'ErrorURL' => $url,
                     'ReturnTo' => $url,
                 ];
-                return new RunnableResponse([$authsource, 'login'], [$params]);
+                return $authsource->login($params);
             }
 
             $attributes = $authsource->getAttributes();
