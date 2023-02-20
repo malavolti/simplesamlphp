@@ -852,7 +852,7 @@ class SP extends Auth\Source
                 $state['core:SP']
             ));
 
-            $state['saml:sp:IdPMetadata'] = $this->getIdPMetadata($state['saml:sp:IdP']);
+            $state['saml:sp:IdPMetadata'] = $this->getIdPMetadata($this->config, $state['saml:sp:IdP']);
             $state['saml:sp:AuthId'] = $this->authId;
             self::askForIdPChange($state);
         }
@@ -1035,7 +1035,7 @@ class SP extends Auth\Source
      *
      * @param array $state  The logout state.
      */
-    public function logout(array &$state): void
+    public function logout(array &$state): ?Response
     {
         Assert::keyExists($state, 'saml:logout:Type');
 
@@ -1043,7 +1043,10 @@ class SP extends Auth\Source
         Assert::oneOf($logoutType, ['saml2']);
 
         $response = $this->startSLO2($this->config, $state);
-        $response?->send();
+        if ($response instanceof Response) {
+            return $response;
+        }
+        return null;
     }
 
 
